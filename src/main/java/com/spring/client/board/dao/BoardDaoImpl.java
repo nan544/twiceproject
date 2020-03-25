@@ -47,4 +47,9 @@ public class BoardDaoImpl implements BoardDao {
 		return session.delete("boardUpdate",b_num);
 	}
 
+	@Override
+	public int boardListCnt(BoardVO bvo) {
+		return (Integer)session.selectOne("boardListCnt");
+	}
+
 }

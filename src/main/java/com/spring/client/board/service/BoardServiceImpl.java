@@ -69,5 +69,11 @@ public class BoardServiceImpl implements BoardService {
 		result=boardDao.boardDelete(b_num);
 		return result;
 	}
+	
+	//전체 레코드 수 구현
+	@Override
+	public int boardListCnt(BoardVO bvo) {
+		return boardDao.boardListCnt(bvo);
+	}
 
 }

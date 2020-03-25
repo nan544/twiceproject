@@ -43,7 +43,7 @@ $(function() {
 	<div class="contentTit"><h3>게시판 글작성</h3> </div>
 	
 	<div class="contentTB">
-		<form id="f_writeForm" name="f_writeForm">
+		<form id="f_writeForm" name="f_writeForm" enctype="multipart/form-data">
 			<table id="boardWrite">
 				<colgroup>
 					<col width="17%"/>
@@ -62,6 +62,10 @@ $(function() {
 					<td class="ac">내용</td>
 					<td><textarea name="b_content" id="b_content"></textarea></td>
 				</tr>	
+				<tr>
+						<td class="ac">첨부파일</td>
+						<td><input type="file" name="file" id="file"></td>
+					</tr>
 				<tr>
 					<td class="ac">비밀번호</td>
 					<td><input type="password" name="b_pwd" id="b_pwd"></td>

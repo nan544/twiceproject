@@ -1,6 +1,9 @@
 package com.spring.client.board.controller;
 
+import java.io.IOException;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.spring.client.board.service.BoardService;
 import com.spring.client.board.vo.BoardVO;
+import com.spring.common.file.FileUploadUtil;
+import com.spring.common.page.Paging;
+import com.spring.common.util.Util;
 
 @Controller
 @RequestMapping(value = "/board")
@@ -26,12 +32,26 @@ public class BoardController {
 	/**********************************************************
 	 * 글목록 구현하기
 	 **********************************************************/
-	@RequestMapping(value = "/boardList.do", method = RequestMethod.GET)
+	@RequestMapping(value = "/boardList", method = RequestMethod.GET)
 	public String boardList(@ModelAttribute BoardVO bvo, Model model) {
 		log.info("boardList 호출 성공");
 
+		// 페이징 세팅
+		Paging.setPage(bvo);
+
+		// 전체 레코드 수 구현
+		int total = boardService.boardListCnt(bvo);
+		log.info("total = " + total);
+
+		// 글 번호 재설정
+		int count = total - (Util.nvl(bvo.getPage()) - 1) * Util.nvl(bvo.getPageSize());
+		log.info("count = " + count);
+
 		List<BoardVO> boardList = boardService.boardList(bvo);
+
 		model.addAttribute("boardList", boardList);
+		model.addAttribute("count", count);
+		model.addAttribute("total", total);
 		model.addAttribute("data", bvo);
 
 		return "board/boardList";
@@ -39,21 +59,32 @@ public class BoardController {
 	} // end boardList
 
 	/* 글쓰기 폼 출력하기 */
-	@RequestMapping(value = "/writeForm.do")
+	@RequestMapping(value = "/writeForm")
 	public String writeForm() {
 		log.info("writeForm 호출 성공");
 		return "board/writeForm";
 	} // end writeForm
 
 	/* 글쓰기 구현하기 */
-	@RequestMapping(value = "/boardInsert.do", method = RequestMethod.POST)
-	public String boardInsert(@ModelAttribute BoardVO bvo, Model model) {
+	@RequestMapping(value = "/boardInsert", method = RequestMethod.POST)
+	public String boardInsert(@ModelAttribute BoardVO bvo, Model model, HttpServletRequest request)
+			throws IllegalStateException, IOException {
 		log.info("insert 호출 성공");
 
+		// 확인 후 주석 처리
+		// log.info("fileName : " + bvo.getFile().getOriginalFilename());
+		// log.info("b_title : " + bvo.getB_title());
+		
 		int result = 0;
 
 		String url = "";
-
+		
+		
+		if(bvo.getFile()!=null) {
+			String b_file = FileUploadUtil.fileUpload(bvo.getFile(), request, "board");
+			bvo.setB_file(b_file);
+		}
+		
 		result = boardService.boardInsert(bvo);
 		if (result == 1) {
 			url = "/board/boardList.do";
@@ -65,7 +96,7 @@ public class BoardController {
 	} // end boardInsert
 
 	/* 글 상세 보기 구현 */
-	@RequestMapping(value = "/boardDetail.do", method = RequestMethod.GET)
+	@RequestMapping(value = "/boardDetail", method = RequestMethod.GET)
 	public String boardDetail(@ModelAttribute BoardVO pvo, Model model) {
 		log.info("boardDetail 호출 성공");
 		log.info("b_num =" + pvo.getB_num());
@@ -93,7 +124,7 @@ public class BoardController {
 	 * 직접 출력하는 방식. produces 속성은 지정한 미디어 타입과 관련된 응답을 생성하는데 사용한 실제 컨텐트 타입을 보장.
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/pwdConfirm.do", method = RequestMethod.POST, produces = "application/text;charset=utf8")
+	@RequestMapping(value = "/pwdConfirm", method = RequestMethod.POST, produces = "text/plan;charset=UTF-8")
 	public String pwdConfirm(@ModelAttribute BoardVO bvo) {
 		log.info("pwdConfirm 호출성공");
 		String value = "";
@@ -109,64 +140,82 @@ public class BoardController {
 		log.info("Result =" + result);
 		log.info("Result =" + value);
 
-		return value+"";
+		return value + "";
 	}
-	/* 글 수정 폼 출력하기 
+
+	/*
+	 * 글 수정 폼 출력하기
+	 * 
 	 * @param : b_num;
+	 * 
 	 * @return : BoardVO
-	 * */
+	 */
 	@RequestMapping(value = "/updateForm.do")
 	public String updateForm(@ModelAttribute BoardVO bvo, Model model) {
 		log.info("updateForm 호출 성공");
-		log.info("b_num = "+bvo.getB_num());
-		
+		log.info("b_num = " + bvo.getB_num());
+
 		BoardVO updateData = new BoardVO();
 		updateData = boardService.boardDetail(bvo);
-		
-		model.addAttribute("updateData",updateData);
+
+		model.addAttribute("updateData", updateData);
 		return "board/updateForm";
 	}
 	/* 글 수정 구현하기 */
 	/* @Param : boardVO */
-	
-	@RequestMapping(value = "/boardUpdate.do", method = RequestMethod.POST)
-	public String boareUpdate(@ModelAttribute BoardVO bvo) {
+
+	@RequestMapping(value = "/boardUpdate", method = RequestMethod.POST)
+	public String boareUpdate(@ModelAttribute BoardVO bvo, HttpServletRequest request)  throws IllegalStateException,IOException{
 		log.info("boardUpdate 호출 성공");
+
+		int result = 0;
+		String url = "";
+		String b_file="";
 		
-		int result=0;
-		String url="";
-		
-		result=boardService.boardUpdate(bvo);
-		
-		if(result==1) {
-			//url"/board/boardList.do"; //수정 후 목록으로 이동
-			//아래 url은 수정 후 상세 페이지로 이동
-			url="/board/boardDetail.do?b_num="+bvo.getB_num();
+		if(!bvo.getFile().isEmpty()) {
+			log.info("========== file = " + bvo.getFile().getOriginalFilename());
+			if(!bvo.getB_file().isEmpty()) {
+				FileUploadUtil.fileDelete(bvo.getB_file(), request);
+			}
+			b_file = FileUploadUtil.fileUpload(bvo.getFile(), request, "board");
+			bvo.setB_file(b_file);
 		}else {
-			url="/board/updateForm.do?b_num="+bvo.getB_num();
+			log.info("첨부파일 없음");
+			bvo.setB_file("");
 		}
-		return "redirect:"+url;
+		log.info("===========b_file = "+bvo.getB_file());
+		result = boardService.boardUpdate(bvo);
+
+		if (result == 1) {
+			// url"/board/boardList.do"; //수정 후 목록으로 이동
+			// 아래 url은 수정 후 상세 페이지로 이동
+			url="/board/boardDetail.do?b_num="+bvo.getB_num()+"&page="+bvo.getPage()+"&pageSize="+bvo.getPageSize();
+		}
+		return "redirect:" + url;
 	}
 	/* 글 삭제 구현하기 */
 	/* @throws : IOException */
-	
-	@RequestMapping(value = "/boardDelete.do")
-	public String boardDelete(@ModelAttribute BoardVO bvo) {
+
+	@RequestMapping(value = "/boardDelete")
+	public String boardDelete(@ModelAttribute BoardVO bvo, HttpServletRequest request)throws IOException {
 		log.info("boardDelete 호출 성공");
-		
-		//아래 변수에는 입력 성공에 대한 상태값을 담습니다.(1 or 0)
+
+		// 아래 변수에는 입력 성공에 대한 상태값을 담습니다.(1 or 0)
 		int result = 0;
-		String url="";
+		String url = "";
 		
-		result= boardService.boardDelete(bvo.getB_num());
-		if(result==1) {
-			url="/board/boardList.do";
-		}else {
-			url="/board/boardDetail.do?b_num="+bvo.getB_num();
+		if(!bvo.getB_file().isEmpty()) {
+			FileUploadUtil.fileDelete(bvo.getB_file(), request);
 		}
-		return "redirect:"+url;
 		
+		result = boardService.boardDelete(bvo.getB_num());
+		if (result == 1) {
+			url="/board/boardList.do?page="+bvo.getPage()+"&pageSize="+bvo.getPageSize();
+		} else {
+			url="/board/boardDetail.do?b_num="+bvo.getB_num()+"&page="+bvo.getPage()+"&pageSize="+bvo.getPageSize();
+		}
+		return "redirect:" + url;
+
 	}
-	
-	
+
 }
