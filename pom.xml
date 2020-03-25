@@ -17,6 +17,13 @@
 	</properties>
 	<dependencies>
 
+	<!-- LomBok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.0</version>
+			<scope>provided</scope>
+		</dependency>
 		<!-- JSON(jackson) -->
 		<!-- http://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
 		<dependency>
