@@ -210,9 +210,9 @@ public class BoardController {
 		
 		result = boardService.boardDelete(bvo.getB_num());
 		if (result == 1) {
-			url="/board/boardList.do?page="+bvo.getPage()+"&pageSize="+bvo.getPageSize();
+			url="/board/boardList.do";
 		} else {
-			url="/board/boardDetail.do?b_num="+bvo.getB_num()+"&page="+bvo.getPage()+"&pageSize="+bvo.getPageSize();
+			url="/board/boardDetail.do"+bvo.getB_num();
 		}
 		return "redirect:" + url;
 
