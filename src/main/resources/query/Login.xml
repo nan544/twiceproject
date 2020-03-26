@@ -13,7 +13,7 @@
 	</select>
 	<select id="loginSelect" parameterType="login"
 		resultType="login">
-		/* 로그인 처리 쿼리 */
+		<!-- /* 로그인 처리 쿼리 */ -->
 		select
 		userId,
 		userPw,
