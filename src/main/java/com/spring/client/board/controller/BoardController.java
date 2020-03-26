@@ -208,6 +208,7 @@ public class BoardController {
 		int result = 0;
 		String url = "";
 		
+		
 		if(!bvo.getB_file().isEmpty()) {
 			FileUploadUtil.fileDelete(bvo.getB_file(), request);
 		}
